@@ -1,7 +1,7 @@
-advent of code {{ year }}
+advent of code 2022
 ===================
 
-https://adventofcode.com/{{ year }}
+https://adventofcode.com/2022
 
 ### about
 

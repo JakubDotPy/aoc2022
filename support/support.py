@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Generator
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-
+ENV_FILE = os.path.join(HERE, '../../.env')
 
 @contextlib.contextmanager
 def timing(name: str = '') -> Generator[None, None, None]:
@@ -33,7 +33,7 @@ def timing(name: str = '') -> Generator[None, None, None]:
 
 
 def _get_cookie_headers() -> dict[str, str]:
-    with open(os.path.join(HERE, '../.env')) as f:
+    with open(ENV_FILE) as f:
         contents = f.read().strip()
     return {'Cookie': contents}
 
