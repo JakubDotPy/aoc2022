@@ -1,5 +1,7 @@
 import argparse
 import os.path
+from string import ascii_lowercase
+from string import ascii_uppercase
 
 import pytest
 
@@ -9,52 +11,34 @@ INPUT_TXT = os.path.join(os.path.dirname(__file__), 'input.txt')
 
 # NOTE: paste test text here
 INPUT_S = '''\
-A Y
-B X
-C Z
+vJrwpWtwJgWrhcsFMMfFFhFp
+jqHRNqRjqzjGDLGLrsFMfFZSrLrFZsSL
+PmmdzqPrVvPwwTWBwg
+wMqvLMZHhHMvwLHjbvcjnnSBnvTQFn
+ttgJtRGJQctTZtZT
+CrZsJsPPZsGzwwsLwLmpwMDw
 '''
-EXPECTED = 15
+EXPECTED = 157
 
-"""
-A rock      X
-B paper     Y
-C scissors  Z
-"""
+priority_mapping = (
+        dict(zip(ascii_lowercase, range(1, 27)))
+        | dict(zip(ascii_uppercase, range(27, 53)))
+)
 
 
 def compute(s: str) -> int:
-    move_points = {
-        'X': 1,
-        'Y': 2,
-        'Z': 3,
-    }
-    counter_to_win = {
-        'A': 'Y',
-        'B': 'Z',
-        'C': 'X',
-    }
-    counter_to_draw = {
-        'A': 'X',
-        'B': 'Y',
-        'C': 'Z',
-    }
-
-    my_score = 0
-
-    # parse lines
     lines = s.splitlines()
+    priorities = []
     for line in lines:
-        him, me = line.split()
-        my_score += move_points[me]
-        if counter_to_draw[him] == me:
-            my_score += 3
-        if counter_to_win[him] == me:
-            my_score += 6
+        ll = len(line) // 2
+        first, second = line[:ll], line[ll:]
+        same = set(first) & set(second)
+        priorities.append(same.pop())
 
-    return my_score
+    return sum(priority_mapping[char] for char in priorities)
 
 
-# @pytest.mark.solved
+@pytest.mark.solved
 @pytest.mark.parametrize(
     ('input_s', 'expected'),
     (
