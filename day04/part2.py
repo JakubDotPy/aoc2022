@@ -25,7 +25,8 @@ def compute(s: str) -> int:
     overlaps = 0
     for line in lines:
         a, b, x, y = map(int, re.findall(r'\d+', line))
-        if (x <= a <= y or x <= b <= y) or (a <= x <= b or a <= y <= b):
+        A, B = set(range(a, b + 1)), set(range(x, y + 1))
+        if A.intersection(B):
             overlaps += 1
     return overlaps
 
