@@ -211,6 +211,7 @@ def print_coords_hash(coords: set[tuple[int, int]]) -> None:
 
 
 class Direction4(enum.Enum):
+    # NOTE: zero-zero is top left, UP is "down"
     UP = (0, -1)
     RIGHT = (1, 0)
     DOWN = (0, 1)
