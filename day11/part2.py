@@ -1,6 +1,12 @@
 import argparse
+import functools
+import math
 import os.path
+import re
 from collections import deque
+from dataclasses import dataclass
+from dataclasses import field
+from typing import ClassVar
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -43,44 +49,37 @@ Monkey 3:
 EXPECTED = 10605
 
 
+@dataclass
 class Monkey:
-    other_monkeys: dict[int, 'Monkey'] = dict()
+    index: ClassVar[dict[int, 'Monkey']] = dict()
+    preprocess_val: ClassVar[int]
+    name: int
+    operation: callable
+    mod: int
+    true_monkey: int
+    false_monkey: int
+    processed_items: int = 0
+    items: deque = field(default_factory=deque)
 
-    def __init__(self, name, items, operation, test_operation, true_monkey, false_monkey):
-        self.name = name
-        self.items = deque(items)
-        self.operation = operation
-        self.test_operation = test_operation
-        self.processed_items = 0
-        self.true_monkey = true_monkey
-        self.false_monkey = false_monkey
+    def __post_init__(self):
         self._register()
 
     def _register(self):
-        self.other_monkeys[self.name] = self
-
-    def _getitem(self):
-        return self.items.popleft()
-
-    def _receive_item(self, item):
-        self.items.append(item)
+        Monkey.index[self.name] = self
 
     def preprocess(self, worry_level):
-        # NOTE: calculated by multiplying all monkeys divisors
-        #  this effectively reduces the size but keeps all the modulos intact
-        return worry_level % 9_699_690
+        return worry_level % self.preprocess_val
 
     def test_the_level(self, item):
         item = self.operation(item)
         item = self.preprocess(item)
-        monkey_to_go = self.true_monkey if self.test_operation(item) else self.false_monkey
-        self.other_monkeys[monkey_to_go]._receive_item(item)
+        monkey_to_go = self.true_monkey if item % self.mod == 0 else self.false_monkey
+        Monkey.index[monkey_to_go].items.append(item)
 
     def process_items(self):
         while self.items:
-            item = self._getitem()
             self.processed_items += 1
-            self.test_the_level(item)
+            self.test_the_level(self.items.popleft())
 
     def __str__(self):
         return f'{self.__class__.__name__}({self.name}, {self.items})'
@@ -98,75 +97,52 @@ def show_graph(monkeys):
     plt.show()
 
 
-def compute(s: str) -> int:
-    monkeys = [
-        Monkey(
-            name=0,
-            items=[57, 58],
-            operation=lambda x: x * 19,
-            test_operation=lambda x: x % 7 == 0,
-            true_monkey=2,
-            false_monkey=3,
-        ),
-        Monkey(
-            name=1,
-            items=[66, 52, 59, 79, 94, 73],
-            operation=lambda x: x + 1,
-            test_operation=lambda x: x % 19 == 0,
-            true_monkey=4,
-            false_monkey=6,
-        ),
-        Monkey(
-            name=2,
-            items=[80],
-            operation=lambda x: x + 6,
-            test_operation=lambda x: x % 5 == 0,
-            true_monkey=7,
-            false_monkey=5,
-        ),
-        Monkey(
-            name=3,
-            items=[82, 81, 68, 66, 71, 83, 75, 97],
-            operation=lambda x: x + 5,
-            test_operation=lambda x: x % 11 == 0,
-            true_monkey=5,
-            false_monkey=2,
-        ),
-        Monkey(
-            name=4,
-            items=[55, 52, 67, 70, 69, 94, 90],
-            operation=lambda x: x * x,
-            test_operation=lambda x: x % 17 == 0,
-            true_monkey=0,
-            false_monkey=3,
-        ),
-        Monkey(
-            name=5,
-            items=[69, 85, 89, 91],
-            operation=lambda x: x + 7,
-            test_operation=lambda x: x % 13 == 0,
-            true_monkey=1,
-            false_monkey=7,
-        ),
-        Monkey(
-            name=6,
-            items=[75, 53, 73, 52, 75],
-            operation=lambda x: x * 7,
-            test_operation=lambda x: x % 2 == 0,
-            true_monkey=0,
-            false_monkey=4,
-        ),
-        Monkey(
-            name=7,
-            items=[94, 60, 79],
-            operation=lambda x: x + 2,
-            test_operation=lambda x: x % 3 == 0,
-            true_monkey=1,
-            false_monkey=6,
-        ),
-    ]
+def eval_op(op, amt, x):
+    return eval(f'{x}{op}{amt}')
 
-    show_graph(monkeys)
+
+def square_op(x):
+    return x * x
+
+
+def parse_monkeys(s):
+    monkeys = []
+    for monkey_str in s.split('\n\n'):
+        monkey_str = re.sub(r'[,:]', '', monkey_str)
+        for line in monkey_str.splitlines():
+            match line.strip().split():
+                case 'Monkey', name:
+                    name = int(name[0])
+                case 'Starting', 'items', *items:
+                    items = deque(map(int, items))
+                case 'Operation', *_, 'old':
+                    operation = square_op
+                case 'Operation', *_, op, amt:
+                    operation = functools.partial(eval_op, op, amt)
+                case 'Test', *_, mod:
+                    mod = int(mod)
+                case 'If', 'true', *_, true_monkey:
+                    true_monkey = int(true_monkey)
+                case 'If', 'false', *_, false_monkey:
+                    false_monkey = int(false_monkey)
+                case _:
+                    raise AssertionError(f'uncaught case {line}')
+        monkeys.append(Monkey(
+            name=name,
+            items=items,
+            operation=operation,
+            mod=mod,
+            true_monkey=true_monkey,
+            false_monkey=false_monkey,
+        ))
+    return monkeys
+
+
+def compute(s: str) -> int:
+    monkeys = parse_monkeys(s)
+    # NOTE: calculated by multiplying all monkeys divisors
+    #  this effectively reduces the size but keeps all the modulos intact
+    Monkey.preprocess_val = math.prod(m.mod for m in Monkey.index.values())
 
     for i in range(10_000):
         for monkey in monkeys:
@@ -176,7 +152,7 @@ def compute(s: str) -> int:
     return monkey_business_levels[-1] * monkey_business_levels[-2]
 
 
-# @pytest.mark.solved
+@pytest.mark.solved
 @pytest.mark.parametrize(
     ('input_s', 'expected'),
     (
