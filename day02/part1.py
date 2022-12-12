@@ -54,7 +54,7 @@ def compute(s: str) -> int:
     return my_score
 
 
-# @pytest.mark.solved
+@pytest.mark.solved
 @pytest.mark.parametrize(
     ('input_s', 'expected'),
     (
