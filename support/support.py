@@ -13,8 +13,12 @@ from itertools import zip_longest
 from pathlib import Path
 from typing import Generator
 
+import networkx as nx
+from matplotlib import pyplot as plt
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 ENV_FILE = os.path.join(HERE, '../../.env')
+
 
 @contextlib.contextmanager
 def timing(name: str = '') -> Generator[None, None, None]:
@@ -241,3 +245,8 @@ class Direction4(enum.Enum):
 
     def apply(self, x: int, y: int, *, n: int = 1) -> tuple[int, int]:
         return self.x * n + x, self.y * n + y
+
+
+def show_graph(G):
+    nx.draw(G, with_labels=True, font_weight='bold')
+    plt.show()
