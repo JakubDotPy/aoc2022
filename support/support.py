@@ -214,6 +214,17 @@ def print_coords_hash(coords: set[tuple[int, int]]) -> None:
     print(format_coords_hash(coords))
 
 
+def print_grid(grid: dict[tuple[int, int]]):
+    min_x = min(x for x, _ in grid)
+    max_x = max(x for x, _ in grid)
+    min_y = min(y for _, y in grid)
+    max_y = max(y for _, y in grid)
+    for y in range(min_y, max_y + 1):
+        for x in range(min_x, max_x + 1):
+            print(grid.get((x, y), '.'), end='')
+        print()
+
+
 class Direction4(enum.Enum):
     # NOTE: zero-zero is top left, UP is "down"
     UP = (0, -1)
