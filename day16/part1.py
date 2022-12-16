@@ -1,11 +1,11 @@
 import argparse
+import functools
 import os.path
 import re
 
 import networkx as nx
 import pytest
 
-from support import show_graph
 from support import timing
 
 INPUT_TXT = os.path.join(os.path.dirname(__file__), 'input.txt')
@@ -42,11 +42,38 @@ def make_graph(s):
     return G
 
 
+def now_released(G):
+    return sum(
+        data['flow_rate'] * int(data['state'])
+        for node, data in G.nodes(data=True)
+    )
+
+
+def closed_valves(G):
+    return set(
+        node
+        for node, data in G.nodes(data=True)
+        if not data['state']
+    )
+
+
+def open_valve(G, valve_name):
+    G.nodes[valve_name]['state'] = True
+
+
 def compute(s: str) -> int:
     G = make_graph(s)
-    show_graph(G)
+    G.closed_valves = functools.partial(closed_valves, G)  # attach new function
+    G.now_released = functools.partial(now_released, G)  # attach new function
+    G.open_valve = functools.partial(open_valve, G)
+    # show_graph(G)
 
-    return 0
+    total_released = 0
+    for _ in range(30):  # minutes
+        total_released += G.now_released()
+        G.open_valve('JJ')
+
+    return total_released
 
 
 # @pytest.mark.solved
