@@ -37,6 +37,7 @@ def compute(s: str) -> int:
     ),
 )
 def test(input_s: str, expected: int) -> None:
+    print()  # newline in test output, helps readability
     assert compute(input_s) == expected
 
 
