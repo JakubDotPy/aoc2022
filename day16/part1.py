@@ -37,46 +37,42 @@ def make_graph(s):
             G.add_edge(this, o)
     for node, data in G.nodes(data=True):
         data['flow_rate'] = flow_rates[node]
-        data['state'] = False
 
     return G
 
 
-def now_released(G):
-    return sum(
-        data['flow_rate'] * int(data['state'])
-        for node, data in G.nodes(data=True)
-    )
+def released_value(G, valve_solution):
+    return sum(G.nodes[valve]['flow_rate'] * time for valve, time in valve_solution.items())
 
 
-def closed_valves(G):
-    return set(
-        node
-        for node, data in G.nodes(data=True)
-        if not data['state']
-    )
+def get_valve_times(distances, valves: set, time_remaining, current_node='AA', valve_to_time=None):
+    if valve_to_time is None:
+        valve_to_time = {}
 
-
-def open_valve(G, valve_name):
-    G.nodes[valve_name]['state'] = True
+    for chosen_valve in valves:
+        new_time = time_remaining - distances[current_node][chosen_valve] - 1
+        if new_time < 2:
+            continue  # we don't have time to open, continue with next option
+        new_valve_to_time = valve_to_time | {chosen_valve: new_time}
+        # recursively choose others
+        yield from get_valve_times(distances, valves - {chosen_valve}, new_time, chosen_valve, new_valve_to_time)
+    yield valve_to_time  # the return solution
 
 
 def compute(s: str) -> int:
     G = make_graph(s)
-    G.closed_valves = functools.partial(closed_valves, G)  # attach new function
-    G.now_released = functools.partial(now_released, G)  # attach new function
-    G.open_valve = functools.partial(open_valve, G)
-    # show_graph(G)
 
-    total_released = 0
-    for _ in range(30):  # minutes
-        total_released += G.now_released()
-        G.open_valve('JJ')
+    nonzero_valves = set(node for node, rate in G.nodes(data='flow_rate') if rate)
+    all_distances = nx.floyd_warshall(G)
 
-    return total_released
+    # find all bruteforce solutions
+    get_released = functools.partial(released_value, G)  # pre-apply the graph
+    scores = map(get_released, get_valve_times(all_distances, nonzero_valves, current_node='AA', time_remaining=30))
+
+    return max(scores)
 
 
-# @pytest.mark.solved
+@pytest.mark.solved
 @pytest.mark.parametrize(
     ('input_s', 'expected'),
     (
