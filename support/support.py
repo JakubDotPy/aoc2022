@@ -261,3 +261,18 @@ class Direction4(enum.Enum):
 def show_graph(G):
     nx.draw(G, with_labels=True, font_weight='bold')
     plt.show()
+
+
+class Colour(enum.Enum):
+    """ ANSI escape sequences for coloured console output """
+    RED = "\033[31m"
+    GREEN = "\033[32m"
+    YELLOW = "\033[33m"
+    BLUE = "\033[34m"
+    MAGENTA = "\033[35m"
+    CYAN = "\033[36m"
+    BOLD = "\033[1m"
+    RESET = "\033[0m"
+
+    def apply(self, string: str):
+        return self.value + string + self.RESET.value
