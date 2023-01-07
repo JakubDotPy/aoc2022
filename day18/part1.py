@@ -32,6 +32,13 @@ INPUT_S_2 = '''\
 EXPECTED_2 = 64
 
 
+def in_bounds(cube, bounds):
+    return all(
+        bound[0] <= coord <= bound[1]
+        for coord, bound in zip(cube, bounds)
+    )
+
+
 def compute(s: str) -> int:
     cubes = set(
         tuple(map(int, line.split(',')))
@@ -52,8 +59,13 @@ def compute(s: str) -> int:
     while queue:
         # Pop the first current from the queue
         current = queue.popleft()
+
+        if current in seen:
+            continue
+
         # Mark the current as seen
         seen.add(current)
+
         # Get all the neighbors of the current
         x, y, z = current
         candidates = (
@@ -70,10 +82,7 @@ def compute(s: str) -> int:
             if candidate in cubes:
                 total_sides += 1
                 continue
-            if not all(
-                    bound[0] <= coord <= bound[1]
-                    for coord, bound in zip(candidate, bounds)
-            ):
+            if not in_bounds(candidate, bounds):
                 continue
 
             queue.append(candidate)
