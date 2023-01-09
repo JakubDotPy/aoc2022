@@ -40,54 +40,26 @@ def in_bounds(cube, bounds):
 
 
 def compute(s: str) -> int:
-    cubes = set(
-        tuple(map(int, line.split(',')))
-        for line in s.splitlines()
-    )
-
-    # consider the envelope around the cubes to be one larger
-    min_max = lambda x: (min(x) - 1, max(x) + 1)
-    # (min_x, max_x), (min_y, max_y), (min_z, max_z)
-    bounds = tuple(map(min_max, zip(*cubes)))
-
-    start = tuple(coord[0] for coord in bounds)
-    total_sides = 0
-
-    # BFS
-    seen = set()
-    queue = deque((start,))
-    while queue:
-        # Pop the first current from the queue
-        current = queue.popleft()
-
-        if current in seen:
-            continue
-
-        # Mark the current as seen
-        seen.add(current)
-
-        # Get all the neighbors of the current
-        x, y, z = current
+    cubes = set()
+    faces = 0
+    for line in s.splitlines():
+        x, y, z = map(int, line.split(','))
         candidates = (
-            (x + 1, y, z),
-            (x - 1, y, z),
-            (x, y + 1, z),
-            (x, y - 1, z),
-            (x, y, z + 1),
-            (x, y, z - 1),
+        (x + 1, y, z),
+        (x - 1, y, z),
+        (x, y + 1, z),
+        (x, y - 1, z),
+        (x, y, z + 1),
+        (x, y, z - 1),
         )
-        for candidate in candidates:
-            if candidate in seen:
-                continue
-            if candidate in cubes:
-                total_sides += 1
-                continue
-            if not in_bounds(candidate, bounds):
-                continue
+        faces += 6  # assume free standing
+        for c in candidates:
+            if c in cubes:
+                # if adjacent, remove two faces
+                faces -= 2
+            cubes.add((x, y, z))
 
-            queue.append(candidate)
-
-    return total_sides
+    return faces
 
 
 # @pytest.mark.solved
