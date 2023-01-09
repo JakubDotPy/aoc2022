@@ -5,13 +5,13 @@
         <option name="INTERPRETER_OPTIONS" value=""/>
         <option name="PARENT_ENVS" value="true"/>
         <option name="SDK_HOME" value=""/>
-        <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/day18"/>
+        <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/day19"/>
         <option name="IS_MODULE_SDK" value="true"/>
         <option name="ADD_CONTENT_ROOTS" value="true"/>
         <option name="ADD_SOURCE_ROOTS" value="true"/>
         <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py"/>
         <option name="_new_additionalArguments" value="&quot;-s&quot;"/>
-        <option name="_new_target" value="&quot;$PROJECT_DIR$/day18/part1.py&quot;"/>
+        <option name="_new_target" value="&quot;$PROJECT_DIR$/day19/part1.py&quot;"/>
         <option name="_new_targetType" value="&quot;PATH&quot;"/>
         <method v="2"/>
     </configuration>
