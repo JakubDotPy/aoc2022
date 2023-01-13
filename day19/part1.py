@@ -2,6 +2,7 @@ import argparse
 import collections
 import os.path
 import re
+from copy import deepcopy
 from dataclasses import dataclass
 from dataclasses import field
 
@@ -27,9 +28,6 @@ class Robot:
     produces: str
     cost: dict[str, int]
 
-    def mine(self):
-        return self.produces
-
     def can_be_created(self, available_ores: dict[str, int]) -> bool:
         return all(
             (costs_ore in available_ores and available_ores[costs_ore] >= costs_value)
@@ -39,27 +37,40 @@ class Robot:
 
 
 @dataclass
-class Factory:
+class State:
+    robots: list[Robot]
+    ores: collections.Counter = field(default_factory=collections.Counter)
+
+
+@dataclass
+class StateFactory:
     robot_blueprints: list[Robot]
-    active_robots: list[Robot] = field(init=False)
-    available_ores: collections.Counter = field(default_factory=collections.Counter, init=False)
-    wall_clock: int = field(default=1, init=False)
 
-    def __post_init__(self):
-        self.active_robots = [self.robot_blueprints[0]]  # we always start with the base robot
+    def _initial_state(self):
+        return State(
+            robots=[self.robot_blueprints[0]],  # we start with the first robot
+            ores=collections.Counter()
+        )
 
-    def mine(self):
-        for robot in self.active_robots:
-            self.available_ores[robot.produces] += 1
+    def _mine(self, state: State) -> State:
+        new_state = deepcopy(state)
+        for robot in new_state.robots:
+            new_state.ores[robot.produces] += 1
+        return new_state
 
-    def create_robots(self) -> list[Robot]:
-        created = []
-        for robot in reversed(self.robot_blueprints):
-            if robot.can_be_created(self.available_ores):
-                created.append(robot)
+    def _create_robots(self, state: State) -> list[State]:
+        new_states = []
+        for robot in self.robot_blueprints:
+            if robot.can_be_created(state.ores):
+                new_state = deepcopy(state)
+                new_state.robots.append(robot)
                 for ore, cost in robot.cost.items():
-                    self.available_ores[ore] -= cost
-        return created
+                    new_state.ores[ore] -= cost
+                new_states.append(new_state)
+        return new_states
+
+    def crate_new_states(self, state: State) -> list[State]:
+        return [self._mine(state)] + self._create_robots(state)
 
 
 def line_to_robots(line: str) -> list[Robot]:
@@ -76,15 +87,12 @@ def line_to_robots(line: str) -> list[Robot]:
 
 
 def compute_one(line) -> int:
-    factory = Factory(robot_blueprints=line_to_robots(line))
+    factory = StateFactory(robot_blueprints=line_to_robots(line))
 
-    while factory.wall_clock < 24:
-        fresh_robots = factory.create_robots()
-        factory.mine()
-        factory.active_robots.extend(fresh_robots)
-        factory.wall_clock += 1
+    first_state = factory._initial_state()
+    second_states = factory.crate_new_states(first_state)
 
-    return factory.available_ores['geodes']
+    return 0
 
 
 def compute(s: str) -> int:
